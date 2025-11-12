@@ -1,5 +1,6 @@
-# Mon Oct  6 09:44:47 MDT 2025
+# Start Date Mon Oct  6 09:44:47 MDT 2025
 ## Updated Thu Oct 23 21:16:27 MDT 2025
+## Upgraded Wed Nov 12 08:40:21 MST 2025
 
 ## Welcome
 
@@ -119,3 +120,50 @@ if __name__ == "__main__":
 ## Connect / Contact
 
 x.com/coderad32 -> follow for more documents like this one.
+
+---
+## Upgraded Version of orgininal Text DATA
+## Overview: XTTPS / XSSL Custom Protocols
+
+The **XTTPS** and **XSSL** protocols are experimental, custom-designed security communication layers intended to provide a foundation for secure data transmission, certification, and authentication. These protocols conceptually mirror traditional **HTTPS** and **SSL/TLS**, but introduce new mechanisms tailored for custom security certification frameworks.
+
+### Purpose and Design Goals
+
+The goal of XTTPS and XSSL is to:
+
+* Explore **alternative encryption and certification models** beyond traditional public CA-based systems.
+* Provide a **customizable, modular security stack** that can be adapted to proprietary network environments.
+* Experiment with **lightweight cryptographic layers** for resource-constrained or specialized systems.
+
+---
+
+## Example Source Code
+
+The current repository or script includes **example code** demonstrating the conceptual structure of the XTTPS and XSSL protocols.
+
+> **Note:** This implementation is for **educational and reference purposes only**. It is currently a *read-only example* — it defines how an XTTPS/XSSL client or server might operate, but it does **not yet include a functional runtime** or live network interaction layer.
+
+In its current form, the example:
+
+* Outlines the **core data flow** for a potential secure handshake.
+* Illustrates **message structure**, **certificate exchange**, and **encryption logic placeholders**.
+* Serves as a **prototype or specification** draft, not a fully functional protocol stack.
+
+The ongoing development focus is on:
+
+* Implementing a **runtime engine** capable of handling real-time connections and packet parsing.
+* Defining the **XSSL handshake process**, key exchange, and validation chain.
+* Building a **custom certification authority model** specific to the XTTPS framework.
+
+---
+
+## Future Development
+
+Planned milestones for this project include:
+
+1. **Runtime Integration** – Develop a working runtime capable of initiating and maintaining XTTPS sessions.
+2. **Security Validation** – Implement cryptographic primitives and test them for reliability and performance.
+3. **Certification Framework** – Design a decentralized or custom authority system for XSSL certificate issuance and verification.
+4. **Testing and Documentation** – Create test suites, debug tools, and detailed documentation for implementers.
+
+---
