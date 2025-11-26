@@ -2,8 +2,6 @@
 
 This suite provides a secure protocol implementation with custom certificate handling, cryptographic primitives, and debugging tools.
 
-Thanks Cody! Here's a refined and expanded version of your outline, styled for clarity and professionalism. I’ve added structure, elaboration, and a touch of warmth to make it more engaging for readers or contributors:
-
 ## 👋 Welcome Users
 
 Welcome to our project! We’re thrilled to have you here. Whether you're a developer, researcher, or enthusiast, your curiosity and contributions are valued. This initiative is built on collaboration, innovation, and a shared commitment to secure, sustainable technology.
@@ -105,7 +103,7 @@ For questions, contributions, or collaboration inquiries:
 
 ---
 
-
+## A Work In Progress
 
 
 
