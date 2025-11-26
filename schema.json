@@ -10,10 +10,6 @@
   "required": ["subject", "issuer", "valid_from", "valid_to", "signature"]
 }
 
-// # 
-// # Update Example Upgrade: v2.0.0json
-// #
-
 {
   "subject": "CN=Cody Bunnell, O=Top Code, OU=Protocol Dev, C=US",
   "issuer": "CN=Mars Preserve Foundation Root CA, O=MPF, C=US",
