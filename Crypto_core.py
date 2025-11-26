@@ -1,23 +1,16 @@
 """
-crypto_core.py — Modular cryptographic backbone for transport & certification.
+crypto_core.py — Modular cryptographic backbone for XTTPS (transport) & XSSL (certification).
 
 Primitives:
-- Hashing: SHA3-256/512, BLAKE3 (optional, domain-separated)
-- Signing: Ed25519, ECDSA (SECP256R1), Dilithium (placeholder interface)
+- Hashing: SHA3-256/512, BLAKE3 (optional), domain-separated
+- Signing: Ed25519, ECDSA (P-256), PQ placeholder (Dilithium)
 - AEAD: AES-GCM, ChaCha20-Poly1305
-- Hybrid (ECIES-style): X25519/ECDH + HKDF + AEAD
+- Hybrid ECIES: X25519 + HKDF-SHA256 + AEAD
+- Benchmarks: latency & throughput scaffolds
 
 Dependencies:
 - cryptography>=41.0.0
 - blake3 (optional; pip install blake3)
-
-Design goals:
-- Consistent, minimal APIs
-- Domain separation everywhere (context tags)
-- Safe parameter defaults; explicit override hooks
-- Benchmark scaffolding for latency/throughput comparisons
-
-Cody: built for XTTPS/XSSL modularity with transport & certification layers in mind.
 """
 
 from __future__ import annotations
@@ -30,7 +23,7 @@ from typing import Optional, Tuple, Callable
 # Hashes
 import hashlib
 try:
-    import blake3  # optional
+    import blake3  # optional acceleration & extendable outputs
 except ImportError:
     blake3 = None
 
@@ -44,14 +37,51 @@ from cryptography.hazmat.backends import default_backend
 
 
 # ============================================================
+# Context tags (single source of truth)
+# ============================================================
+
+XTTPS_CTX = {
+    "FRAME_HDR": b"XTTPS:frame:hdr",
+    "FRAME_BODY": b"XTTPS:frame:body",
+    "FRAME_META": b"XTTPS:frame:meta",
+    "HS_INIT": b"XTTPS:hs:init",
+    "HS_ACCEPT": b"XTTPS:hs:accept",
+    "KEY_UPDATE": b"XTTPS:key:update",
+    "STREAM_CTRL": b"XTTPS:stream:ctrl",
+}
+
+XSSL_CTX = {
+    "CERT_BODY": b"XSSL:cert:body",
+    "CERT_EXT": b"XSSL:cert:ext",
+    "CERT_CHAIN": b"XSSL:cert:chain",
+    "ISSUER_BIND": b"XSSL:issuer:bind",
+    "CRL_ENTRY": b"XSSL:rev:crl",
+    "OCSP_REQ": b"XSSL:rev:ocsp:req",
+    "OCSP_RESP": b"XSSL:rev:ocsp:resp",
+}
+
+ALLOWED_CTX = set(XTTPS_CTX.values()) | set(XSSL_CTX.values())
+
+
+def assert_context(ctx: Optional[bytes]):
+    if ctx is None:
+        return
+    if ctx not in ALLOWED_CTX:
+        raise ValueError(f"Unknown context tag: {ctx!r}")
+
+
+# ============================================================
 # Domain separation helper
 # ============================================================
 
 def ds_tag(context: Optional[bytes]) -> bytes:
-    if context is None or len(context) == 0:
+    """
+    Domain-separate all operations. Context must be a known tag or None.
+    When None, we still add a generic tag to avoid collisions by accident.
+    """
+    if context is None:
         return b"XCORE:default:"
-    if not isinstance(context, (bytes, bytearray)):
-        raise TypeError("context must be bytes")
+    assert_context(context)
     return b"XCORE:" + context + b":"
 
 
@@ -71,7 +101,9 @@ class Hasher:
             raise RuntimeError("blake3 module not available; pip install blake3")
 
     def digest(self, data: bytes, context: Optional[bytes] = None, outlen: int = 32) -> bytes:
-        """Domain-separated digest. outlen applies to BLAKE3; SHA3 fixed sizes."""
+        """
+        Domain-separated digest. 'outlen' applies to BLAKE3 only; SHA3 uses fixed sizes.
+        """
         tag = ds_tag(context)
         msg = tag + data
         if self.alg == HashAlg.SHA3_256:
@@ -100,7 +132,7 @@ class SignAlg(enum.Enum):
 @dataclass
 class SignatureResult:
     sig: bytes
-    pubkey: bytes  # serialized public key (for transport or certification binding)
+    pubkey: bytes  # serialized public key (PEM SPKI)
 
 class Signer:
     def __init__(self, alg: SignAlg):
@@ -117,13 +149,13 @@ class Signer:
             self._priv = ec.generate_private_key(ec.SECP256R1(), default_backend())
             self._pub = self._priv.public_key()
         elif self.alg == SignAlg.DILITHIUM:
-            raise NotImplementedError("Dilithium: integrate via PQC library and bind here.")
+            raise NotImplementedError("Dilithium: integrate via PQC library.")
         else:
             raise ValueError("Unsupported signing algorithm")
         return self
 
-    def load_private_pkcs8(self, key_bytes: bytes, password: Optional[bytes] = None):
-        self._priv = serialization.load_pem_private_key(key_bytes, password=password, backend=default_backend())
+    def load_private_pkcs8(self, key_pem: bytes, password: Optional[bytes] = None):
+        self._priv = serialization.load_pem_private_key(key_pem, password=password, backend=default_backend())
         self._pub = self._priv.public_key()
         return self
 
@@ -148,7 +180,7 @@ class Signer:
         if self.alg == SignAlg.ED25519:
             sig = self._priv.sign(msg)
         elif self.alg == SignAlg.ECDSA_P256:
-            # ECDSA: hash message; default SHA256
+            # ECDSA: prehash with SHA-256 to stabilize size
             digest = hashlib.sha256(msg).digest()
             sig = self._priv.sign(digest, ec.ECDSA(Prehashed(hashes.SHA256())))
         elif self.alg == SignAlg.DILITHIUM:
@@ -231,7 +263,7 @@ class HybridCiphertext:
 class ECIES:
     """
     Ephemeral X25519 -> HKDF-SHA256 -> AEAD (AES-GCM or ChaCha20-Poly1305).
-    Provides forward secrecy and certificate-bound trust (bind via AAD context).
+    Use AAD to bind certificate/issuer/client identifiers for onboarding.
     """
     def __init__(self, aead_alg: AeadAlg = AeadAlg.CHACHA20_POLY1305, kdf_salt: Optional[bytes] = None, kdf_info: Optional[bytes] = None):
         self.aead_alg = aead_alg
@@ -239,16 +271,13 @@ class ECIES:
         self.info = kdf_info or b"XCORE:ECIES:v1"
 
     def encrypt(self, recipient_pub_pem: bytes, plaintext: bytes, context: Optional[bytes] = None, aad: Optional[bytes] = None) -> HybridCiphertext:
-        # Load recipient X25519 public key (or ECDH if preferred)
         recip_pub = serialization.load_pem_public_key(recipient_pub_pem, backend=default_backend())
         if not isinstance(recip_pub, x25519.X25519PublicKey):
             raise TypeError("recipient_pub_pem must be X25519 public key")
 
-        # Ephemeral key
         eph_priv = x25519.X25519PrivateKey.generate()
         shared = eph_priv.exchange(recip_pub)
 
-        # Derive AEAD key via HKDF-SHA256
         aead_key = HKDF(
             algorithm=hashes.SHA256(),
             length=32,
@@ -349,55 +378,56 @@ def x25519_generate() -> Tuple[bytes, bytes]:
 if __name__ == "__main__":
     print("== Hashing ==")
     h = Hasher(HashAlg.SHA3_256)
-    d = h.hexdigest(b"hello", context=b"XTTPS:header")
+    d = h.hexdigest(b"hello", context=XTTPS_CTX["FRAME_HDR"])
     print("SHA3-256:", d)
 
     if blake3 is not None:
         hb3 = Hasher(HashAlg.BLAKE3)
-        print("BLAKE3-32:", hb3.hexdigest(b"hello", context=b"XSSL:digest", outlen=32))
+        print("BLAKE3-32:", hb3.hexdigest(b"hello", context=XSSL_CTX["CERT_BODY"], outlen=32))
 
     print("\n== Signing ==")
     s_ed = Signer(SignAlg.ED25519).generate()
     msg = b"cert-body-bytes"
-    sig_res = s_ed.sign(msg, context=b"XSSL:cert")
-    ok = s_ed.verify(sig_res.sig, msg, context=b"XSSL:cert", pubkey_pem=sig_res.pubkey)
+    sig_res = s_ed.sign(msg, context=XSSL_CTX["CERT_CHAIN"])
+    ok = s_ed.verify(sig_res.sig, msg, context=XSSL_CTX["CERT_CHAIN"], pubkey_pem=sig_res.pubkey)
     print("Ed25519 verify:", ok)
 
     s_ec = Signer(SignAlg.ECDSA_P256).generate()
-    sig2 = s_ec.sign(msg, context=b"XSSL:cert")
-    ok2 = s_ec.verify(sig2.sig, msg, context=b"XSSL:cert", pubkey_pem=s_ec.export_public_spki())
+    sig2 = s_ec.sign(msg, context=XSSL_CTX["CERT_CHAIN"])
+    ok2 = s_ec.verify(sig2.sig, msg, context=XSSL_CTX["CERT_CHAIN"], pubkey_pem=s_ec.export_public_spki())
     print("ECDSA-P256 verify:", ok2)
 
     print("\n== AEAD ==")
     key_gcm = AESGCM.generate_key(bit_length=256)
     a_gcm = Aead(AeadAlg.AES_GCM, key_gcm)
-    c1 = a_gcm.encrypt(b"payload", context=b"XTTPS:frame", aad=b"v1")
+    c1 = a_gcm.encrypt(b"payload", context=XTTPS_CTX["FRAME_BODY"], aad=b"v1")
     p1 = a_gcm.decrypt(c1)
     print("AES-GCM roundtrip:", p1 == b"payload")
 
     key_ch = ChaCha20Poly1305.generate_key()
     a_ch = Aead(AeadAlg.CHACHA20_POLY1305, key_ch)
-    c2 = a_ch.encrypt(os.urandom(2048), context=b"XTTPS:blob")
+    blob = os.urandom(2048)
+    c2 = a_ch.encrypt(blob, context=XTTPS_CTX["FRAME_BODY"])
     p2 = a_ch.decrypt(c2)
-    print("ChaCha20-Poly1305 roundtrip:", p2 is not None and len(p2) == 2048)
+    print("ChaCha20-Poly1305 roundtrip:", p2 == blob)
 
     print("\n== ECIES ==")
     priv_pem, pub_pem = x25519_generate()
     ecies = ECIES(aead_alg=AeadAlg.CHACHA20_POLY1305)
-    hc = ecies.encrypt(pub_pem, b"onboarding-secret", context=b"XSSL:onboard", aad=b"client-123")
+    hc = ecies.encrypt(pub_pem, b"onboarding-secret", context=XSSL_CTX["ISSUER_BIND"], aad=b"client-123")
     plain = ecies.decrypt(priv_pem, hc)
     print("ECIES roundtrip:", plain == b"onboarding-secret")
 
     print("\n== Benchmarks ==")
     # hash bench
-    br = Bench.timeit("sha3-256(1KB)x1000", lambda: Hasher(HashAlg.SHA3_256).digest(os.urandom(1024), b"bench"), 1000)
+    br = Bench.timeit("sha3-256(1KB)x1000", lambda: Hasher(HashAlg.SHA3_256).digest(os.urandom(1024), XTTPS_CTX["FRAME_META"]), 1000)
     print(br)
 
     # aead bulk bench
     bulk_plain = os.urandom(1024 * 64)  # 64KB
     br2 = Bench.bulk(
         "chacha20-poly1305(64KB)x200",
-        lambda: Aead(AeadAlg.CHACHA20_POLY1305, ChaCha20Poly1305.generate_key()).encrypt(bulk_plain, b"bench").ct,
+        lambda: Aead(AeadAlg.CHACHA20_POLY1305, ChaCha20Poly1305.generate_key()).encrypt(bulk_plain, XTTPS_CTX["FRAME_BODY"]).ct,
         200,
         len(bulk_plain)
     )
