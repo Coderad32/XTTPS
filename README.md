@@ -105,5 +105,19 @@ For questions, contributions, or collaboration inquiries:
 
 ## A Work In Progress
 
+## Installation 
 
+Install github cli simply clone the URL.
+
+```
+git clone https://github.com/Coderad32/XTTPS.git
+
+
+```
+Then change directories to XTTPS.
+```
+
+cd XTTPS
+
+```
 
