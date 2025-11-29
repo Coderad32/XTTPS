@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XTTPS‑XSSL Suite</title>
+  <meta name="description" content="Secure protocol implementation with custom certificates, cryptographic primitives, and debugging tools." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0e0f12;
+      --bg-elev: #14161b;
+      --text: #e7e9ee;
+      --muted: #a9afbb;
+      --primary: #6ee7ff;
+      --primary-weak: rgba(110, 231, 255, 0.15);
+      --accent: #8ef7c0;
+      --border: #252832;
+      --code-bg: #111317;
+      --shadow: 0 10px 28px rgba(0,0,0,0.35);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --maxw: 1100px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 20% 0%, var(--primary-weak), transparent 40%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(142,247,192,0.10), transparent 45%),
+                  var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 20;
+      background: linear-gradient(to bottom, rgba(14,15,18,0.85), rgba(14,15,18,0.65));
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.2px;
+    }
+    .logo {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: conic-gradient(from 180deg at 50% 50%, #6ee7ff, #8ef7c0, #6ee7ff);
+      box-shadow: 0 6px 16px rgba(110, 231, 255, 0.35);
+    }
+    .navlinks { display: flex; gap: 18px; flex-wrap: wrap; }
+    .navlinks a { color: var(--muted); font-weight: 600; }
+    .navlinks a:hover { color: var(--text); }
+
+    /* Hero */
+    .hero {
+      padding: 54px 0 24px;
+    }
+    .hero-card {
+      background: linear-gradient(180deg, rgba(20,22,27,0.85), rgba(20,22,27,0.65));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px;
+    }
+    .hero h1 { font-size: 2.3rem; margin: 0 0 12px; letter-spacing: 0.3px; }
+    .hero p { color: var(--muted); margin: 0 0 16px; }
+    .cta {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+      background: #171922; color: var(--text); font-weight: 600;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    }
+    .btn.primary {
+      background: linear-gradient(180deg, #14212a, #0f1a20);
+      border-color: #27414b;
+      color: var(--text);
+    }
+    .btn:hover { filter: brightness(1.05); transform: translateY(-1px); transition: 120ms ease; }
+
+    .hero-aside {
+      border-left: 1px dashed var(--border);
+      padding-left: 20px;
+    }
+    .pill {
+      display: inline-block; font-size: 0.85rem; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; margin: 4px 8px 0 0;
+      background: #141920;
+    }
+
+    /* Sections */
+    section {
+      margin: 26px 0;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(20,22,27,0.85), rgba(20,22,27,0.65));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+    h2 { font-size: 1.6rem; margin: 0 0 16px; }
+    h3 { font-size: 1.15rem; margin: 20px 0 8px; color: var(--text); }
+    .muted { color: var(--muted); }
+
+    /* Grid */
+    .grid { display: grid; gap: 16px; }
+    .grid.two { grid-template-columns: 1fr 1fr; }
+    .grid.three { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 900px) {
+      .hero-card { grid-template-columns: 1fr; }
+      .grid.two, .grid.three { grid-template-columns: 1fr; }
+      .hero-aside { border-left: none; padding-left: 0; border-top: 1px dashed var(--border); padding-top: 16px; }
+    }
+
+    /* Lists */
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 8px 0; border-bottom: 1px dashed rgba(37,40,50,0.6); }
+    li:last-child { border-bottom: none; }
+
+    /* Code / blocks */
+    .block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      overflow: auto;
+    }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 30px;
+      padding: 28px 0 40px;
+      color: var(--muted);
+    }
+    .socials { display: flex; gap: 12px; flex-wrap: wrap; }
+    .socials a { background: #141920; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+
+    /* Accessibility helpers */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  </style>
+</head>
+<body>
+  <header aria-label="Primary">
+    <div class="wrap nav">
+      <div class="brand">
+        <span class="logo" aria-hidden="true"></span>
+        <span>XTTPS‑XSSL Suite</span>
+      </div>
+      <nav class="navlinks" aria-label="Site">
+        <a href="#welcome">Welcome</a>
+        <a href="#about">About</a>
+        <a href="#network-security">Network Security</a>
+        <a href="#runtime">Runtime</a>
+        <a href="#xssl">XSSL</a>
+        <a href="#primitives">Primitives</a>
+        <a href="#tooling">Tooling & Docs</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="welcome">
+      <div class="wrap">
+        <div class="hero-card">
+          <div>
+            <h1>Secure, decentralized transport with developer‑first tooling</h1>
+            <p>Custom certificate handling, modern cryptographic primitives, and visibility tools you can trust.</p>
+            <div class="cta">
+              <a class="btn primary" href="#about">Explore the project</a>
+              <a class="btn" href="#tooling">Run tests & inspect packets</a>
+            </div>
+            <div class="muted" style="margin-top: 14px;">
+              👋 Welcome Users — developers, researchers, and enthusiasts. Your curiosity and contributions are valued.
+            </div>
+          </div>
+          <aside class="hero-aside">
+            <span class="pill">Privacy‑first</span>
+            <span class="pill">Decentralized trust</span>
+            <span class="pill">Post‑quantum options</span>
+            <span class="pill">Cross‑platform</span>
+            <span class="pill">CLI + GUI friendly</span>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="wrap grid two">
+        <div class="card">
+          <h2>About the project</h2>
+          <p class="muted">This initiative is built on collaboration, innovation, and a shared commitment to secure, sustainable technology.</p>
+          <h3>Sustainability</h3>
+          <p>Tools and systems designed for off‑grid localhost living and resource efficiency.</p>
+          <h3>Security</h3>
+          <p>Protocols and frameworks that prioritize privacy, integrity, and decentralized trust.</p>
+          <h3>Automation</h3>
+          <p>Intelligent agents that streamline workflows and optimize resource allocation.</p>
+        </div>
+
+        <div class="card">
+          <h2>Network security</h2>
+          <ul>
+            <li><strong>XTTPS/XSSL:</strong> Custom encrypted transport layer with decentralized certificate validation.</li>
+            <li><strong>Session Management:</strong> Secure handshake, certificate exchange, and encrypted payload delivery.</li>
+            <li><strong>Privacy‑First Design:</strong> No third‑party tracking, minimal metadata exposure, robust timeout handling.</li>
+          </ul>
+          <div class="block" style="margin-top: 12px;">
+            <code>// Minimal XTTP header example
+X-Session-Token: <opaque>
+X-Cert-Hash: <blake3-hex>
+X-Nonce: <random-12-bytes></code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="runtime">
+      <div class="wrap grid two">
+        <div class="card">
+          <h2>XTTPS runtime</h2>
+          <ul>
+            <li><strong>Session lifecycle:</strong> Initiates, maintains, and terminates encrypted sessions with custom handshakes.</li>
+            <li><strong>Header management:</strong> XTTP schemas with fields like X‑Session‑Token, X‑Cert‑Hash, and X‑Nonce.</li>
+            <li><strong>Payload encryption:</strong> AES‑GCM or ChaCha20; optional layered/onion encryption.</li>
+            <li><strong>Stateful context:</strong> Tokens, timestamps, and peer metadata tracking.</li>
+            <li><strong>Extensibility hooks:</strong> Middleware for logging, rate‑limits, and protocol upgrades.</li>
+          </ul>
+          <h3>Suggested modules</h3>
+          <ul>
+            <li><strong>xttps_core.py:</strong> Session orchestration and packet routing</li>
+            <li><strong>xttp_headers.py:</strong> Header schema, validation, and formatting</li>
+            <li><strong>session_store.py:</strong> In‑memory or persistent session tracking</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Quick start snippet</h2>
+          <pre class="block"><code># Pseudocode: start a secure session
+ctx = SessionContext()
+token = ctx.issue_token()
+nonce = ctx.new_nonce()
+
+headers = {
+  "X-Session-Token": token,
+  "X-Cert-Hash": blake3(cert_bytes).hex(),
+  "X-Nonce": nonce.hex(),
+}
+
+payload = aead_encrypt(key, serialize(msg), aad=headers)
+send_xttp(headers, payload)</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="xssl">
+      <div class="wrap grid two">
+        <div class="card">
+          <h2>XSSL certification</h2>
+          <ul>
+            <li><strong>Certificate issuance:</strong> Identity hash, public key, expiry, and optional metadata.</li>
+            <li><strong>Verification logic:</strong> Trust anchors, revocation checks, and signature validation.</li>
+            <li><strong>Decentralized authority:</strong> Web of Trust, blockchain anchoring, or quorum endorsement.</li>
+            <li><strong>Schema definition:</strong> JSON schema for interoperability and validation.</li>
+          </ul>
+          <h3>Suggested modules</h3>
+          <ul>
+            <li><strong>issuer.py:</strong> Certificate generation and signing</li>
+            <li><strong>verifier.py:</strong> Chain validation and trust logic</li>
+            <li><strong>schema.json:</strong> Certificate format and constraints</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Example certificate schema</h2>
+          <pre class="block"><code>{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "XSSL Certificate",
+  "type": "object",
+  "properties": {
+    "identity_hash": { "type": "string" },
+    "public_key": { "type": "string" },
+    "expiry": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object" },
+    "signature": { "type": "string" }
+  },
+  "required": ["identity_hash", "public_key", "expiry", "signature"]
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="primitives">
+      <div class="wrap grid two">
+        <div class="card">
+          <h2>Security primitives</h2>
+          <ul>
+            <li><strong>Hashing:</strong> SHA‑3, Blake3, optionally domain‑separated hashes.</li>
+            <li><strong>Signing:</strong> ECDSA, Ed25519, and post‑quantum options like Dilithium.</li>
+            <li><strong>Encryption:</strong> AES‑GCM, ChaCha20‑Poly1305, hybrid schemes (ECIES).</li>
+            <li><strong>Benchmarking:</strong> Performance tests across platforms and payload sizes.</li>
+          </ul>
+          <h3>Suggested modules</h3>
+          <ul>
+            <li><strong>primitives.py:</strong> Core cryptographic functions</li>
+            <li><strong>tests/:</strong> Unit tests and benchmarks</li>
+            <li><strong>utils.py:</strong> Key generation, encoding, padding helpers</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Benchmark sample output</h2>
+          <pre class="block"><code># Throughput (MiB/s) — illustrative
+SHA-3-256:   95.2
+BLAKE3:     1050.4
+AES-GCM:     820.7 (128-bit key)
+ChaCha20-Poly1305: 910.1</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="tooling">
+      <div class="wrap grid two">
+        <div class="card">
+          <h2>Tooling & docs</h2>
+          <ul>
+            <li><strong>Test runner:</strong> CLI to execute protocol tests, validate headers, and simulate sessions.</li>
+            <li><strong>Packet inspector:</strong> Visualizes XTTP packets, headers, payloads, debug mode, and hex dumps.</li>
+            <li><strong>Integration guides:</strong> Runtime setup, certificate handling, and protocol flows.</li>
+            <li><strong>Examples:</strong> Sample configs, test packets, annotated flows for quick prototyping.</li>
+          </ul>
+          <h3>Suggested modules</h3>
+          <ul>
+            <li><strong>test_runner.py:</strong> CLI test suite</li>
+            <li><strong>packet_inspector.py:</strong> XTTP packet visualization</li>
+            <li><strong>docs/:</strong> Markdown guides and specs</li>
+            <li><strong>examples/:</strong> Sample flows and configs</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>CLI example</h2>
+          <pre class="block"><code># Invoke tests
+python -m xttps.tests --suite full --verbose
+
+# Inspect a captured packet
+python packet_inspector.py --file sample.xttp --hex --debug</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="wrap card">
+        <h2>Contact information</h2>
+        <p>For questions, contributions, or collaboration:</p>
+        <div class="socials" role="list" aria-label="Social links">
+          <a href="https://github.com/Coderad32" target="_blank" rel="noopener">GitHub: @Coderad32</a>
+          <a href="https://x.com/Coderad32" target="_blank" rel="noopener">X (Twitter): @Coderad32</a>
+          <a href="https://www.youtube.com/@Coderad32" target="_blank" rel="noopener">YouTube: Coderad32</a>
+          <a href="https://www.linkedin.com/in/cody-bunnell/" target="_blank" rel="noopener">LinkedIn: Cody Bunnell</a>
+          <a href="https://github.com/Coderad32" target="_blank" rel="noopener">Email: via GitHub profile</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div>© XTTPS‑XSSL Suite. Built for secure, sustainable technology.</div>
+      <div class="muted">No third‑party tracking. Minimal metadata. Developer‑friendly by design.</div>
+    </div>
+    
+  </footer>
+</body>
+</html>
