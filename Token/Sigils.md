@@ -18,7 +18,7 @@ For additional work please see other repos.
 
 Please connect if you like this project.
 
-```perl
+```h
 
 Token Sigils -- Key Mapper
 
