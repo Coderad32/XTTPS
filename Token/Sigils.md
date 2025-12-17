@@ -54,4 +54,4 @@ Please no spammers. If you would like to help out please feel free to submit a "
 
 ## Support / Donate
 
-Ask before you donate to the project for your saftey and so your no following the wrong link.
+Ask before you donate to the project for your secure method and so your not following the wrong links.
