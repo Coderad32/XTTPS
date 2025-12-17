@@ -10,9 +10,11 @@ with numbers as the base.
 ## More So
 
 Each token sigil is unique and the sigil keymapper project
-can be found in the other repository on my profile.
+can be found in the other repository on my profile. 
 
-## Connect 
+For additional work please see other repos.
+
+## Connect / XTTPS
 
 Please connect if you like this project.
 
@@ -20,18 +22,18 @@ Please connect if you like this project.
 
 Token Sigils -- Key Mapper
 
-###################################
-! @ # $ % ^ & * ( !)              # 1  - 10
-!! !@ !# !$ !% !^ !& !* !(        # 11 - 19
-@) @! @@ @# @$ @% @^ @& @* @(     # 20 - 29
-#) #! #@ ## #$ #% #^ #& #* #(     # 30 - 39 
-$) $! $@ $# $$ $% $^ $& $* $(     # 40 - 49
-%) %! %@ %# %$ %% %^ %& %* %(     # 50 - 59
-^) ^! ^@ ^# ^$ ^% ^^ ^& ^* ^(     # 60 - 69
-&) &! &@ &# &$ &% &^ && &* &(     # 70 - 79
-*) *! *@ *# *$ *% *^ *& ** *(     # 80 - 89
-() (! (@ (# ($ (% (^ (& (* (( !)) # 90 - 100
-###################################
+################################################
+    !  @  #  $  %  ^  &  *  (      # 1 - 9   ###
+!) !! !@ !# !$ !% !^ !& !* !(     # 10 - 19  ###
+@) @! @@ @# @$ @% @^ @& @* @(     # 20 - 29  ###
+#) #! #@ ## #$ #% #^ #& #* #(     # 30 - 39  ###
+$) $! $@ $# $$ $% $^ $& $* $(     # 40 - 49  ###
+%) %! %@ %# %$ %% %^ %& %* %(     # 50 - 59  ###
+^) ^! ^@ ^# ^$ ^% ^^ ^& ^* ^(     # 60 - 69  ###
+&) &! &@ &# &$ &% &^ && &* &(     # 70 - 79  ###
+*) *! *@ *# *$ *% *^ *& ** *(     # 80 - 89  ###
+() (! (@ (# ($ (% (^ (& (* (( !)) # 90 - 100 ###
+################################################
 
 Source Code: Cody Bunnell ( github.com/Coderad32 on x.com/coderad32 )
 
