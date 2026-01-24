@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Delta Station // Tactical HUD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #05070b;
+      --bg-alt: #0b1018;
+      --accent: #6bffb5;
+      --accent-soft: rgba(107, 255, 181, 0.15);
+      --accent-strong: rgba(107, 255, 181, 0.4);
+      --text-main: #e5f5ff;
+      --text-muted: #7f8da3;
+      --warning: #ffb347;
+      --danger: #ff5c5c;
+      --border-soft: rgba(255, 255, 255, 0.08);
+      --panel-radius: 6px;
+      --scan-line: rgba(255, 255, 255, 0.03);
+      --grid-line: rgba(107, 255, 181, 0.08);
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "Consolas", "SF Mono", Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top, #151b2b 0, #05070b 55%, #000 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Subtle animated scan + grid */
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    body::before {
+      background-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        var(--scan-line) 2px,
+        transparent 4px
+      );
+      background-size: 100% 4px;
+      animation: scan 8s linear infinite;
+      opacity: 0.7;
+    }
+
+    body::after {
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 80px 80px;
+      opacity: 0.25;
+    }
+
+    @keyframes scan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-soft);
+      background: linear-gradient(to right, rgba(0,0,0,0.9), rgba(0,0,0,0.4));
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      box-shadow: 0 0 12px rgba(107, 255, 181, 0.6);
+    }
+
+    .nav-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .nav-title-main {
+      font-size: 0.9rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .nav-title-sub {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      position: relative;
+      padding-bottom: 0.25rem;
+    }
+
+    .nav-links a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(to right, var(--accent), var(--warning));
+      transition: width 0.2s ease-out;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-main);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent) 0, #0b3f2a 60%, transparent 100%);
+      box-shadow: 0 0 10px rgba(107, 255, 181, 0.8);
+    }
+
+    main {
+      flex: 1;
+    }
+
+    .shell {
+      max-width: 1120px;
+      margin: 1.75rem auto 2.5rem;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at top left, rgba(107, 255, 181, 0.08), var(--bg-alt));
+      border-radius: var(--panel-radius);
+      border: 1px solid var(--border-soft);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.8),
+        0 0 24px rgba(0, 0, 0, 0.9);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.06),
+        transparent 40%,
+        transparent 60%,
+        rgba(107, 255, 181, 0.08)
+      );
+      mix-blend-mode: soft-light;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .panel-header {
+      padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(to right, rgba(0,0,0,0.9), rgba(0,0,0,0.4));
+    }
+
+    .panel-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .panel-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+    }
+
+    .panel-tag {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid var(--accent-strong);
+      color: var(--accent);
+      background: rgba(0, 0, 0, 0.7);
+    }
+
+    .panel-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .panel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: radial-gradient(circle at 30% 30%, #fff, #555);
+    }
+
+    .panel-body {
+      padding: 1.1rem 1rem 1.2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hero / mission brief */
+
+    .hero-kicker {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .hero-kicker span {
+      width: 26px;
+      height: 1px;
+      background: linear-gradient(to right, var(--accent), transparent);
+    }
+
+    .hero-title {
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-bottom: 0.7rem;
+    }
+
+    .hero-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 32rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.2rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .hero-meta-item {
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(0, 0, 0, 0.7);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .hero-meta-label {
+      color: var(--text-muted);
+    }
+
+    .hero-meta-value {
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .btn {
+      position: relative;
+      border-radius: 999px;
+      padding: 0.55rem 1.4rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      border: 1px solid var(--accent-strong);
+      background: radial-gradient(circle at top, rgba(107, 255, 181, 0.3), rgba(0, 0, 0, 0.95));
+      color: var(--bg);
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, border-color 0.12s ease-out;
+      box-shadow: 0 0 18px rgba(107, 255, 181, 0.4);
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255,255,255,0.4), transparent 40%);
+      opacity: 0;
+      transform: translateX(-40%);
+      transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+      mix-blend-mode: screen;
+    }
+
+    .btn:hover::before {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 26px rgba(107, 255, 181, 0.7);
+      border-color: var(--accent);
+    }
+
+    .btn-secondary {
+      background: rgba(0, 0, 0, 0.8);
+      color: var(--accent);
+      border-color: var(--border-soft);
+      box-shadow: none;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-strong);
+      box-shadow: 0 0 18px rgba(107, 255, 181, 0.3);
+    }
+
+    .hero-footnote {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Right column: tactical HUD */
+
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .hud-widget {
+      border-radius: 4px;
+      border: 1px solid var(--border-soft);
+      background: radial-gradient(circle at top, rgba(0,0,0,0.4), rgba(0,0,0,0.9));
+      padding: 0.55rem 0.6rem 0.6rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hud-widget::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(107, 255, 181, 0.12),
+        transparent 40%,
+        transparent 60%,
+        rgba(255, 92, 92, 0.08)
+      );
+      mix-blend-mode: soft-light;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .hud-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .hud-value {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+    }
+
+    .hud-value span {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .hud-bar {
+      margin-top: 0.4rem;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hud-bar-fill {
+      position: absolute;
+      inset: 0;
+      width: 72%;
+      background: linear-gradient(to right, var(--danger), var(--warning), var(--accent));
+      box-shadow: 0 0 12px rgba(107, 255, 181, 0.7);
+    }
+
+    .hud-map {
+      margin-top: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-soft);
+      height: 140px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(107, 255, 181, 0.2), transparent 55%),
+        radial-gradient(circle at 80% 70%, rgba(255, 92, 92, 0.2), transparent 55%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.06),
+          rgba(255, 255, 255, 0.06) 1px,
+          transparent 1px,
+          transparent 6px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.06),
+          rgba(255, 255, 255, 0.06) 1px,
+          transparent 1px,
+          transparent 6px
+        );
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hud-map-overlay {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(107, 255, 181, 0.4);
+      border-radius: 4px;
+      mix-blend-mode: screen;
+      opacity: 0.7;
+    }
+
+    .hud-map-blip {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 0 12px rgba(255, 92, 92, 0.9);
+      background: radial-gradient(circle, #fff, #ff5c5c);
+      animation: ping 1.8s infinite ease-out;
+    }
+
+    .hud-map-blip:nth-child(1) { top: 26%; left: 32%; }
+    .hud-map-blip:nth-child(2) { top: 62%; left: 68%; animation-delay: 0.4s; }
+    .hud-map-blip:nth-child(3) { top: 48%; left: 18%; animation-delay: 0.8s; }
+
+    @keyframes ping {
+      0% { transform: scale(0.7); opacity: 1; }
+      70% { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .hud-footer {
+      margin-top: 0.6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .hud-footer span {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    /* Lower row: roster / logs */
+
+    .shell-lower {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .shell-lower {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      font-size: 0.78rem;
+    }
+
+    .list-item {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 0.9fr;
+      gap: 0.5rem;
+      padding: 0.35rem 0.45rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      background: rgba(0, 0, 0, 0.7);
+      align-items: center;
+    }
+
+    .list-item-label {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .list-item-value {
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    .list-item-status {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      text-align: right;
+    }
+
+    .status-ok { color: var(--accent); }
+    .status-warn { color: var(--warning); }
+    .status-danger { color: var(--danger); }
+
+    footer {
+      border-top: 1px solid var(--border-soft);
+      padding: 0.75rem 1.5rem 1.1rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-family: var(--font-mono);
+      display: flex;
+      justify-content: center;
+    }
+
+    footer span {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <div class="nav-left">
+        <div class="nav-logo">Δ2</div>
+        <div class="nav-title">
+          <div class="nav-title-main">Delta Station</div>
+          <div class="nav-title-sub">Orbital strike operations console</div>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="#briefing">Briefing</a>
+        <a href="#ops">Ops</a>
+        <a href="#roster">Roster</a>
+        <a href="#logs">Logs</a>
+      </nav>
+      <div class="nav-status">
+        <div class="status-dot"></div>
+        <span>Link: SOLNET // SECURE</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="shell" id="briefing">
+      <!-- Left: mission brief -->
+      <article class="panel">
+        <header class="panel-header">
+          <div class="panel-header-left">
+            <div class="panel-title">Mission Brief // Delta Halo</div>
+            <span class="panel-tag">Priority // Alpha</span>
+          </div>
+          <div class="panel-controls">
+            <div class="panel-dot"></div>
+            <div class="panel-dot"></div>
+            <div class="panel-dot"></div>
+          </div>
+        </header>
+        <div class="panel-body">
+          <div class="hero-kicker">
+            <span></span>
+            ONI // FIELD TERMINAL
+          </div>
+          <h1 class="hero-title">Secure the ring. Hold the line.</h1>
+          <p class="hero-subtitle">
+            Forward deployment console for an elite strike team operating in contested orbital space.
+            Monitor squad vitals, track enemy signatures, and coordinate drops in real time from a
+            hardened tactical HUD.
+          </p>
+
+          <div class="hero-meta">
+            <div class="hero-meta-item">
+              <span class="hero-meta-label">Theater</span>
+              <span class="hero-meta-value">Delta Ring // Sector 07</span>
+            </div>
+            <div class="hero-meta-item">
+              <span class="hero-meta-label">Op Code</span>
+              <span class="hero-meta-value">IRON SUNRISE</span>
+            </div>
+            <div class="hero-meta-item">
+              <span class="hero-meta-label">Clearance</span>
+              <span class="hero-meta-value">LEVEL // BLACK</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <button class="btn">Initiate deployment</button>
+            <button class="btn btn-secondary">View tactical overlay</button>
+          </div>
+
+          <p class="hero-footnote">
+            // NOTE: This is a static demo console. Wire it to your own data, APIs, or game overlays.
+          </p>
+        </div>
+      </article>
+
+      <!-- Right: HUD -->
+      <aside class="panel" id="ops">
+        <header class="panel-header">
+          <div class="panel-header-left">
+            <div class="panel-title">Tactical HUD // Live Telemetry</div>
+            <span class="panel-tag">Channel // Secure</span>
+          </div>
+          <div class="panel-controls">
+            <div class="panel-dot"></div>
+            <div class="panel-dot"></div>
+            <div class="panel-dot"></div>
+          </div>
+        </header>
+        <div class="panel-body">
+          <div class="hud-grid">
+            <div class="hud-widget">
+              <div class="hud-label">Squad integrity</div>
+              <div class="hud-value">
+                87%
+                <span>Nominal</span>
+              </div>
+              <div class="hud-bar">
+                <div class="hud-bar-fill"></div>
+              </div>
+            </div>
+            <div class="hud-widget">
+              <div class="hud-label">Ammo reserves</div>
+              <div class="hud-value">
+                63%
+                <span>Linked</span>
+              </div>
+              <div class="hud-bar">
+                <div class="hud-bar-fill" style="width:63%;"></div>
+              </div>
+            </div>
+            <div class="hud-widget">
+              <div class="hud-label">Orbital support</div>
+              <div class="hud-value">
+                Online
+                <span>MAC // Ready</span>
+              </div>
+              <div class="hud-bar">
+                <div class="hud-bar-fill" style="width:100%;"></div>
+              </div>
+            </div>
+            <div class="hud-widget">
+              <div class="hud-label">Enemy signatures</div>
+              <div class="hud-value">
+                12
+                <span>Active contacts</span>
+              </div>
+              <div class="hud-bar">
+                <div class="hud-bar-fill" style="width:40%; background:linear-gradient(to right, var(--warning), var(--danger));"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hud-map">
+            <div class="hud-map-overlay"></div>
+            <div class="hud-map-blip"></div>
+            <div class="hud-map-blip"></div>
+            <div class="hud-map-blip"></div>
+          </div>
+
+          <div class="hud-footer">
+            <span>Tracking: Ground fireteams // 04</span>
+            <span>Uplink: STABLE // 3.2ms</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Lower row -->
+      <div class="shell-lower">
+        <section class="panel" id="roster">
+          <header class="panel-header">
+            <div class="panel-header-left">
+              <div class="panel-title">Fireteam roster</div>
+              <span class="panel-tag">Spartan // ODST</span>
+            </div>
+            <div class="panel-controls">
+              <div class="panel-dot"></div>
+              <div class="panel-dot"></div>
+              <div class="panel-dot"></div>
+            </div>
+          </header>
+          <div class="panel-body">
+            <div class="list">
+              <div class="list-item">
+                <div class="list-item-label">Sierra-117</div>
+                <div class="list-item-value">Forward assault // Bravo Gate</div>
+                <div class="list-item-status status-ok">Active</div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-label">Sierra-104</div>
+                <div class="list-item-value">Sniper overwatch // Ridge-3</div>
+                <div class="list-item-status status-ok">Active</div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-label">ODST // Raven</div>
+                <div class="list-item-value">Drop pod // Inbound</div>
+                <div class="list-item-status status-warn">Approach</div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-label">Pelican // Echo-419</div>
+                <div class="list-item-value">Evac window // T-03:12</div>
+                <div class="list-item-status status-warn">Pending</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="logs">
+          <header class="panel-header">
+            <div class="panel-header-left">
+              <div class="panel-title">Combat log // Last transmissions</div>
+              <span class="panel-tag">Encrypted</span>
+            </div>
+            <div class="panel-controls">
+              <div class="panel-dot"></div>
+              <div class="panel-dot"></div>
+              <div class="panel-dot"></div>
+            </div>
+          </header>
+          <div class="panel-body">
+            <div class="list">
+              <div class="list-item">
+                <div class="list-item-label">T-00:14</div>
+                <div class="list-item-value">“Contact. Multiple hostiles breaching lower causeway.”</div>
+                <div class="list-item-status status-danger">Priority</div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-label">T-01:02</div>
+                <div class="list-item-value">“Ring structure scans show anomalous energy spikes.”</div>
+                <div class="list-item-status status-warn">Flagged</div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-label">T-03:47</div>
+                <div class="list-item-value">“MAC round on standby. Awaiting fire solution.”</div>
+                <div class="list-item-status status-ok">Queued</div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-label">T-05:23</div>
+                <div class="list-item-value">“All squads reporting green across the board.”</div>
+                <div class="list-item-status status-ok">Logged</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>// Delta Station Tactical Console &mdash; Sci‑fi HUD demo inspired by classic space‑marine ops UIs.</span>
+  </footer>
+</body>
+</html>
