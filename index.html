@@ -9,6 +9,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
+
+.fade { opacity: 0; transition: opacity 1s; }
+.visible { opacity: 1; }
+    
+  button {
+  transition: all 0.3s ease;
+}
+
+  button:hover {
+  transform: scale(1.1);
+  background-color: #4CAF50;
+}
     :root {
       --bg: #0e0f12;
       --bg-elev: #14161b;
@@ -392,5 +404,23 @@ python packet_inspector.py --file sample.xttp --hex --debug</code></pre>
     </div>
     
   </footer>
+  <script>
+    <button onclick="toggleInfo()">Show More</button>
+<p id="extra" style="display:none;">Extra content here!</p>
+
+<script>
+function toggleInfo() {
+  const x = document.getElementById("extra");
+  x.style.display = x.style.display === "none" ? "block" : "none";
+}
+    window.addEventListener("scroll", function() {
+  document.querySelectorAll(".fade").forEach(el => {
+    if (el.getBoundingClientRect().top < window.innerHeight) {
+      el.classList.add("visible");
+    }
+  });
+});
+</script>
+  </script>
 </body>
 </html>
