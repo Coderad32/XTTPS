@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XTTPS | XSSL Experimental Secure Protocol</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .glow {
+            text-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+        }
+
+        .scanline {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: rgba(6, 182, 212, 0.1);
+            animation: scan 6s linear infinite;
+        }
+
+        @keyframes scan {
+            from {
+                top: 0;
+            }
+
+            to {
+                top: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-cyan-500 text-black font-bold flex items-center justify-center rounded mono">X
+                </div>
+                <h1 class="text-xl font-extrabold tracking-tight glow">XTTPS <span class="text-slate-500 font-light">/
+                        XSSL</span></h1>
+            </div>
+
+            <nav class="hidden md:flex gap-6 text-sm text-slate-400">
+                <a href="#architecture" class="hover:text-cyan-400">Architecture</a>
+                <a href="#security" class="hover:text-cyan-400">Security Model</a>
+                <a href="#spec" class="hover:text-cyan-400">Specification</a>
+                <a href="#research" class="hover:text-cyan-400">Research</a>
+            </nav>
+
+            <a href="https://github.com/coderad32/XTTPS" target="_blank" rel="noopener noreferrer"
+                class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded text-sm">
+                GitHub
+            </a>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="relative border-b border-slate-800">
+        <div class="scanline"></div>
+        <div class="max-w-5xl mx-auto px-6 py-20 text-center">
+            <p class="mono text-cyan-500 uppercase tracking-widest text-xs">Experimental Secure Transport Layer</p>
+            <h2 class="text-5xl font-extrabold text-white mt-4 mb-6">
+                XTTPS Protocol
+            </h2>
+            <p class="text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                XTTPS is a research-oriented secure communication protocol built to explore
+                custom certificate validation, alternative handshake design, and advanced encryption layering.
+                XSSL is the cryptographic layer powering XTTPS sessions.
+            </p>
+
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="#architecture"
+                    class="bg-cyan-600 hover:bg-cyan-500 px-6 py-3 rounded font-semibold text-white">
+                    Explore Architecture
+                </a>
+                <a href="#research"
+                    class="border border-cyan-600 text-cyan-400 hover:bg-cyan-600/10 px-6 py-3 rounded font-semibold">
+                    Research Overview
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="architecture" class="border-b border-slate-800">
+        <div class="max-w-6xl mx-auto px-6 py-16">
+            <h3 class="text-3xl font-bold text-white mb-10">Protocol Architecture</h3>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-slate-900/60 p-6 rounded-lg border border-slate-800">
+                    <h4 class="text-white font-bold mb-3">XSSL Layer</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Custom cryptographic layer handling certificate validation,
+                        asymmetric handshake negotiation, and encrypted payload transmission.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/60 p-6 rounded-lg border border-slate-800">
+                    <h4 class="text-white font-bold mb-3">Handshake Engine</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        3-stage asymmetric handshake focused on minimizing latency
+                        while maintaining session integrity and forward secrecy.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/60 p-6 rounded-lg border border-slate-800">
+                    <h4 class="text-white font-bold mb-3">Validation Framework</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Custom certificate-validation logic operating independently
+                        from traditional CA trust chains.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECURITY MODEL -->
+    <section id="security" class="border-b border-slate-800 bg-black/40">
+        <div class="max-w-6xl mx-auto px-6 py-16">
+            <h3 class="text-3xl font-bold text-white mb-10">Security Model</h3>
+
+            <div class="grid md:grid-cols-2 gap-10">
+
+                <div>
+                    <h4 class="text-cyan-400 font-semibold mb-4">Encryption</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li>• ChaCha20-Poly1305 primary encryption</li>
+                        <li>• AES-256-GCM fallback</li>
+                        <li>• Multi-layer encryption wrapping</li>
+                        <li>• Entropy-strength monitoring</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-cyan-400 font-semibold mb-4">Handshake & Key Exchange</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li>• 3-stage asymmetric negotiation</li>
+                        <li>• RSA-4096 & EdDSA certificate support</li>
+                        <li>• Replay resistance research</li>
+                        <li>• Experimental post-quantum padding concepts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SPECIFICATION -->
+    <section id="spec" class="border-b border-slate-800">
+        <div class="max-w-6xl mx-auto px-6 py-16">
+            <h3 class="text-3xl font-bold text-white mb-10">Technical Specification</h3>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left border border-slate-800">
+                    <tbody class="divide-y divide-slate-800">
+                        <tr>
+                            <td class="p-4 font-semibold text-white">Default Port</td>
+                            <td class="p-4 text-slate-400 mono">8443</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-semibold text-white">Average Latency</td>
+                            <td class="p-4 text-slate-400 mono">~12ms</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-semibold text-white">Throughput</td>
+                            <td class="p-4 text-slate-400 mono">1.22 Xp/s (sustainable)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-semibold text-white">Certificate Support</td>
+                            <td class="p-4 text-slate-400 mono">RSA-4096, EdDSA</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- TERMINAL VIEW -->
+    <section class="bg-black border-b border-slate-800">
+        <div class="max-w-6xl mx-auto px-6 py-16">
+            <h3 class="text-3xl font-bold text-white mb-6">Connection Log Simulation</h3>
+
+            <div role="log" aria-live="polite"
+                class="bg-slate-900 p-6 rounded-lg border border-slate-800 mono text-sm leading-relaxed">
+                <pre><code>[0.0000] INITIALIZING XTTPS_STACK... sponsored by: Mars Preserve Co-Op
+[0.0012] LOADING XSSL_ROOT_CERTS
+[0.0045] BINDING TO PORT 8443
+[0.0089] HANDSHAKE_START -> REMOTE_PEER
+[0.0156] ENCRYPTED_PAYLOAD_RECEIVED
+[0.0190] VALIDATION_SUCCESS: SESSION_ESTABLISHED</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- RESEARCH DISCLAIMER -->
+    <section id="research" class="bg-amber-500/10 border-t border-amber-500/20">
+        <div class="max-w-4xl mx-auto px-6 py-12 text-center">
+            <p class="mono text-amber-400 uppercase text-xs mb-3">Research Notice</p>
+            <p class="text-amber-200/80 text-sm leading-relaxed">
+                XTTPS and XSSL are experimental research projects focused on protocol design,
+                cryptographic experimentation, and architectural exploration.
+                They are not intended for production deployment without formal review,
+                independent security audits, and peer validation.
+            </p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 text-center text-slate-600 text-xs py-6 uppercase tracking-widest">
+        © 2024–2026 XTTPS / XSSL Research Initiative | Mars Preserve Co-Op
+    </footer>
+
+</body>
+
+</html>
