@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>XTTPS — UNSC‑Grade Secure Transport Protocol System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #05070b;
+      --bg-alt: #0b1018;
+      --accent: #4fd5b3;
+      --accent-soft: #2b8f73;
+      --accent-strong: #7fffe0;
+      --text: #e4f3f0;
+      --muted: #7b8b8a;
+      --border: #1b252f;
+      --danger: #ff5c5c;
+      --mono: "Fira Code", "SF Mono", Menlo, Consolas, monospace;
+      --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 2.5rem 1.5rem 3rem;
+      font-family: var(--sans);
+      background: radial-gradient(circle at top, #101624 0, #05070b 55%, #020308 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .frame {
+      max-width: 960px;
+      margin: 0 auto;
+      background: linear-gradient(145deg, rgba(20, 32, 40, 0.96), rgba(5, 7, 11, 0.98));
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow:
+        0 0 0 1px rgba(79, 213, 179, 0.08),
+        0 18px 45px rgba(0, 0, 0, 0.75);
+      padding: 2.25rem 2.5rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .frame::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 0 0, rgba(79, 213, 179, 0.12), transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(127, 255, 224, 0.08), transparent 55%);
+      mix-blend-mode: screen;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .frame-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      border-bottom: 1px solid rgba(79, 213, 179, 0.35);
+      padding-bottom: 1.5rem;
+      margin-bottom: 1.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.75rem 1.5rem;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: 2.4rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .title-block h1 span.icon {
+      font-size: 1.6rem;
+      color: var(--accent-strong);
+    }
+
+    .subtitle {
+      margin: 0.25rem 0 0.4rem;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--accent-soft);
+    }
+
+    .classification {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+    }
+
+    .badge-strip {
+      margin-left: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.4rem;
+      text-align: right;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(79, 213, 179, 0.7);
+      color: var(--accent-strong);
+      background: radial-gradient(circle at 0 0, rgba(79, 213, 179, 0.25), transparent 60%);
+      white-space: nowrap;
+    }
+
+    .badge.badge-danger {
+      border-color: rgba(255, 92, 92, 0.8);
+      color: var(--danger);
+      background: radial-gradient(circle at 0 0, rgba(255, 92, 92, 0.18), transparent 60%);
+    }
+
+    h2 {
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--accent-strong);
+    }
+
+    h3 {
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--accent-soft);
+    }
+
+    p {
+      margin: 0.4rem 0 0.6rem;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    ul {
+      margin: 0.4rem 0 0.8rem 1.2rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    ul li {
+      position: relative;
+      padding-left: 1.1rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.95rem;
+    }
+
+    ul li::before {
+      content: "▹";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--accent);
+      font-size: 0.8rem;
+      transform: translateY(0.15rem);
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      background: rgba(5, 7, 11, 0.9);
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      border: 1px solid rgba(79, 213, 179, 0.25);
+      color: var(--accent-strong);
+    }
+
+    pre {
+      margin: 0.75rem 0 1rem;
+      padding: 0.9rem 1rem;
+      background: radial-gradient(circle at 0 0, rgba(79, 213, 179, 0.12), transparent 65%),
+                  radial-gradient(circle at 100% 100%, rgba(127, 255, 224, 0.08), transparent 60%),
+                  #05070b;
+      border-radius: 10px;
+      border: 1px solid rgba(79, 213, 179, 0.35);
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    pre code {
+      border: none;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0 1.25rem;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.55rem 0.6rem;
+      border-bottom: 1px solid rgba(27, 37, 47, 0.9);
+    }
+
+    th {
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: rgba(5, 7, 11, 0.9);
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(8, 12, 18, 0.9);
+    }
+
+    .panel {
+      border-radius: 10px;
+      border: 1px solid rgba(79, 213, 179, 0.35);
+      background: linear-gradient(135deg, rgba(5, 7, 11, 0.96), rgba(10, 16, 24, 0.98));
+      padding: 0.9rem 1rem;
+      margin: 0.75rem 0 1.25rem;
+    }
+
+    .panel-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--accent-soft);
+      margin-bottom: 0.25rem;
+    }
+
+    .panel-body {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .footer {
+      margin-top: 2.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(79, 213, 179, 0.35);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .footer a {
+      color: var(--accent-strong);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 1.5rem 1rem 2rem;
+      }
+
+      .frame {
+        padding: 1.75rem 1.5rem 2rem;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .badge-strip {
+        align-items: flex-start;
+        margin-left: 0;
+      }
+
+      .title-block h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <div class="frame-inner">
+      <header>
+        <div class="title-block">
+          <h1><span class="icon">⚔️</span><span>XTTPS</span></h1>
+          <p class="subtitle">UNSC‑Grade Secure Transport Protocol System</p>
+          <p class="classification">
+            Classification: ONI Tier‑2 Cryptographic Asset · Designation: XTTPS / Experimental Transport &amp; Token Protocol Suite
+          </p>
+        </div>
+        <div class="badge-strip">
+          <div class="badge">Protocol Dossier</div>
+          <div class="badge badge-danger">Classified</div>
+        </div>
+      </header>
+
+      <section>
+        <h2>Mission briefing</h2>
+        <p>
+          XTTPS is an experimental secure‑transport ecosystem engineered for high‑risk communication environments.
+          Inspired by the precision and modularity of UNSC systems, XTTPS provides:
+        </p>
+        <ul>
+          <li>Custom cryptographic primitives</li>
+          <li>Certificate‑like identity objects</li>
+          <li>Secure session orchestration</li>
+          <li>Multi‑language protocol handlers</li>
+          <li>Symbolic debugging overlays</li>
+          <li>A cross‑disciplinary toolkit for protocol research and field deployment</li>
+        </ul>
+        <p>
+          This repository serves as the <strong>core command module</strong> for your broader secure‑communication architecture.
+        </p>
+      </section>
+
+      <section>
+        <h2>Tactical overview</h2>
+        <pre><code>UNSC NETWORK STACK — CLASSIFIED
+┌──────────────────────────────────────────┐
+│  APPLICATION LAYER                       │
+│  Mission Software / Field Tools          │
+├──────────────────────────────────────────┤
+│  XTTPS CORE                              │
+│  Program.py / Context / Crypto Modules   │
+├──────────────────────────────────────────┤
+│  SECURE LAYER                            │
+│  XSSL / Token / Session Management       │
+├──────────────────────────────────────────┤
+│  PROTOCOL HANDLERS                       │
+│  Python / C++ / Perl TCP Server          │
+└──────────────────────────────────────────┘</code></pre>
+      </section>
+
+      <section>
+        <h2>Repository intel</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Crypto_core.py</code></td>
+              <td>UNSC‑grade cryptographic primitives</td>
+            </tr>
+            <tr>
+              <td><code>Crypto_Msg.py</code></td>
+              <td>Message signing, verification, and secure packaging</td>
+            </tr>
+            <tr>
+              <td><code>Context.py</code></td>
+              <td>Session context, key lifecycle, and protocol state</td>
+            </tr>
+            <tr>
+              <td><code>Program.py</code></td>
+              <td>Primary command module for XTTPS operations</td>
+            </tr>
+            <tr>
+              <td><code>TCP_Server.pl</code></td>
+              <td>Field‑test TCP server for protocol validation</td>
+            </tr>
+            <tr>
+              <td><code>XSSL/</code></td>
+              <td>Secure‑layer experiments (XSSL subsystem)</td>
+            </tr>
+            <tr>
+              <td><code>Token/</code></td>
+              <td>Identity tokens, handshake logic, and trust anchors</td>
+            </tr>
+            <tr>
+              <td><code>Blockchain/</code></td>
+              <td>Experimental ledger‑based protocol extensions</td>
+            </tr>
+            <tr>
+              <td><code>OverlayRender.h</code></td>
+              <td>HUD/overlay rendering interface (C/C++)</td>
+            </tr>
+            <tr>
+              <td><code>ProtocolHandler.h</code></td>
+              <td>Protocol handler interface</td>
+            </tr>
+            <tr>
+              <td><code>SessionManager.h</code></td>
+              <td>Session lifecycle management</td>
+            </tr>
+            <tr>
+              <td><code>Symbolic_Lang.md</code></td>
+              <td>Symbolic language reference</td>
+            </tr>
+            <tr>
+              <td><code>MAIN.md</code></td>
+              <td>Extended documentation</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Cryptographic systems</h2>
+        <p>
+          XTTPS includes a modular cryptographic layer designed for:
+        </p>
+        <ul>
+          <li>Keypair generation</li>
+          <li>Message signing &amp; verification</li>
+          <li>Certificate‑like identity structures</li>
+          <li>Secure session negotiation</li>
+          <li>Token‑based trust establishment</li>
+        </ul>
+        <p>
+          All components are engineered for <strong>interoperability across Python, C/C++, and Perl</strong>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Debugging &amp; HUD systems</h2>
+        <p>Inspired by UNSC tactical overlays, XTTPS provides:</p>
+        <ul>
+          <li>C/C++ HUD rendering interfaces</li>
+          <li>Symbolic language for protocol introspection</li>
+          <li>Session‑level telemetry</li>
+          <li>Message‑level tracing</li>
+          <li>Multi‑language debugging harness</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Deployment</h2>
+
+        <h3>Clone the repository</h3>
+        <pre><code>git clone https://github.com/coderad32/XTTPS
+cd XTTPS</code></pre>
+
+        <h3>Run the main command module</h3>
+        <pre><code>python Program.py</code></pre>
+
+        <h3>Launch the field‑test TCP server</h3>
+        <pre><code>perl TCP_Server.pl</code></pre>
+      </section>
+
+      <section>
+        <h2>Example operation: Secure session</h2>
+        <pre><code>from Context import Context
+from Crypto_Msg import CryptoMessage
+
+ctx = Context()
+msg = CryptoMessage("UNSC Test Transmission")
+signed = ctx.sign(msg)
+verified = ctx.verify(signed)
+
+print("Transmission Verified:", verified)</code></pre>
+      </section>
+
+      <section>
+        <h2>Documentation archive</h2>
+        <ul>
+          <li><code>MAIN.md</code> — Extended documentation</li>
+          <li><code>Symbolic_Lang.md</code> — Symbolic language reference</li>
+          <li><code>XSSL/</code> — Secure‑layer subsystem</li>
+          <li><code>Token/</code> — Identity &amp; handshake logic</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Contributing</h2>
+        <div class="panel">
+          <div class="panel-title">Protocol discipline</div>
+          <div class="panel-body">
+            All contributions must maintain UNSC‑level discipline, clarity, and modularity.
+            Pull requests are reviewed for structural integrity and mission alignment.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>License</h2>
+        <p>MIT License — see <code>LICENSE</code>.</p>
+      </section>
+
+      <section>
+        <h2>Author</h2>
+        <p><strong>Cody Bunnell (Coderad32)</strong><br />Architect of the Mars Preserve, Open System, and XTTPS ecosystems.</p>
+      </section>
+
+      <div class="footer">
+        <div>Document: XTTPS‑RD‑UNSC · Rendered as Halo‑inspired protocol dossier.</div>
+        <div>Repository: <a href="https://github.com/coderad32/XTTPS">github.com/coderad32/XTTPS</a></div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
